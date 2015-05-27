@@ -214,7 +214,7 @@ SRC = wiring.c \
 CXXSRC = WMath.cpp WString.cpp Print.cpp Marlin_main.cpp	\
 	MarlinSerial.cpp motion_control.cpp planner.cpp		\
 	stepper.cpp temperature.cpp \
-	watchdog.cpp electronics_test.cpp
+	watchdog.cpp electronics_test.cpp cap_sense_probe.cpp
 CXXSRC += i2c_capacitance.cpp i2c_driver.cpp \
 	fan_driver.cpp temperature_ADS101X.cpp led_rgbw_pca9632.cpp
 
