@@ -29,6 +29,7 @@
 #include "planner.h"
 #include "stepper.h"
 #include "temperature.h"
+#include "flow.h"
 #include "motion_control.h"
 #include "watchdog.h"
 #include "electronics_test.h"
@@ -39,6 +40,7 @@
 #include "led_rgbw_pca9632.h"
 #include "fan_driver.h"
 #include "cap_sense_probe.h"
+#include "flow_AS5048B.h"
 
 #define VERSION_STRING  "1.0.0"
 
@@ -52,14 +54,14 @@
 // G2  - CW ARC
 // G3  - CCW ARC
 // G4  - Dwell S<seconds> or P<milliseconds>
-// G10 - retract filament according to settings of M207
-// G11 - retract recover filament according to settings of M208
+// G10 - Retract filament according to settings of M207
+// G11 - Retract recover filament according to settings of M208
 // G28 - Home all Axis
 // G90 - Use Absolute Coordinates
 // G91 - Use Relative Coordinates
 // G92 - Set current position to coordinates given
 // G1000 - Store the current position/feedrate. (Used for pause&resume handling)
-// G1001 - Return to stored position from G1000, with the given feedrate, and restore the original feedrate after that.
+// G1001 - Return to stored position from G1000, with the given feedrate, and restore the original feedrate after that
 
 //RepRap M Codes
 // M0   - Unconditional stop - Wait for user to press a button on the LCD (Only if ULTRA_LCD is enabled)
@@ -68,7 +70,7 @@
 // M105 - Read current temp
 // M106 - Fan on
 // M107 - Fan off
-// M109 - Wait for extruder current temp to reach target temp.
+// M109 - Wait for extruder heater to reach target temperature
 // M114 - Display current position
 
 //Custom M Codes
@@ -86,7 +88,7 @@
 // M29  - Stop SD write
 // M30  - Delete file from SD (M30 filename.g)
 // M31  - Output time since last M109 or SD card start to serial
-// M42  - Change pin status via gcode Use M42 Px Sy to set pin x to value y, when omitting Px the onboard led will be used.
+// M42  - Change pin status via gcode. Use M42 Px Sy to set pin x to value y, when omitting Px the onboard led will be used
 // M80  - Turn on Power Supply
 // M81  - Turn off Power Supply
 // M82  - Set E codes absolute (default)
@@ -100,32 +102,34 @@
 // M117 - display message
 // M119 - Output Endstop status to serial port
 // M140 - Set bed target temp
-// M190 - Wait for bed current temp to reach target temp.
+// M190 - Wait for bed heater to reach target temperature
 // M200 - Set filament diameter
 // M201 - Set max acceleration in units/s^2 for print moves (M201 X1000 Y1000)
 // M202 - Set max acceleration in units/s^2 for travel moves (M202 X1000 Y1000) Unused in Marlin!!
 // M203 - Set maximum feedrate that your machine can sustain (M203 X200 Y200 Z300 E10000) in mm/sec
-// M204 - Set default acceleration: S normal moves T filament only moves (M204 S3000 T7000) im mm/sec^2  also sets minimum segment time in ms (B20000) to prevent buffer underruns and M20 minimum feedrate
-// M205 -  advanced settings:  minimum travel speed S=while printing T=travel only,  B=minimum segment time X= maximum xy jerk, Z=maximum Z jerk, E=maximum E jerk
-// M206 - set additional homeing offset
-// M207 - set retract length S[positive mm] F[feedrate mm/sec] Z[additional zlift/hop]
-// M208 - set recover=unretract length S[positive mm surplus to the M207 S*] F[feedrate mm/sec]
+// M204 - Set default acceleration: S normal moves T filament only moves (M204 S3000 T7000) im mm/sec^2.  
+//        Also sets minimum segment time in ms (B20000) to prevent buffer underruns and M20 minimum feedrate
+// M205 - Advanced settings:  minimum travel speed S=while printing T=travel only,  B=minimum segment time X= maximum xy jerk, Z=maximum Z jerk, E=maximum E jerk
+// M206 - Set additional homeing offset
+// M207 - Set retract length S[positive mm] F[feedrate mm/sec] Z[additional zlift/hop]
+// M208 - Set recover=unretract length S[positive mm surplus to the M207 S*] F[feedrate mm/sec]
 // M209 - S<1=true/0=false> enable automatic retract detect if the slicer did not support G10/11: every normal extrude-only move will be classified as retract depending on the direction.
-// M218 - set hotend offset (in mm): T<extruder_number> X<offset_on_X> Y<offset_on_Y> Z<offset_on_Z>
-// M220 S<factor in percent>- set speed factor override percentage
-// M221 S<factor in percent>- set extrude factor override percentage
+// M218 - Set hotend offset (in mm): T<extruder_number> X<offset_on_X> Y<offset_on_Y> Z<offset_on_Z>
+// M220 S<factor in percent> - Set speed factor override percentage
+// M221 S<factor in percent> - Set extrude factor override percentage
 // M240 - Trigger a camera to take a photograph
-// M280 - set servo position absolute. P: servo index, S: angle or microseconds
+// M280 - Set servo position absolute. P: servo index, S: angle or microseconds
 // M300 - Play beepsound S<frequency Hz> P<duration ms>
 // M301 - Set PID parameters P I and D
-// M302 - Allow cold extrudes, or set the minimum extrude S<temperature>.
+// M302 - Allow cold extrudes, or set the minimum extrude S<temperature>
 // M303 - PID relay autotune S<temperature> sets the target temperature. (default target temperature = 150C)
 // M304 - Set bed PID parameters P I and D
 // M400 - Finish all moves
-// M401 - quickstop - Abort all the planned moves. This will stop the head mid-move, so most likely the head will be out of sync with the stepper position after this.
+// M401 - Quickstop - Abort all the planned moves. This will stop the head mid-move, so most likely the head will be out of sync with the stepper position after this
 // M600 - Pause for filament change X[pos] Y[pos] Z[relative lift] E[initial retract] L[later retract distance for removal]
-// M907 - Set digital trimpot motor current using axis codes.
+// M907 - Set digital trimpot motor current using axis codes
 // M999 - Restart after being stopped by error
+// M11000 - Read angle filament sensor (AS5048B). S: sensor (starting from 0)
 
 //Stepper Movement Variables
 
@@ -375,6 +379,11 @@ void setup()
   i2cCapacitanceInit();
 #endif
   ledRGBWInit();
+  for (uint8_t i = 0; i < NR_OF_FLOW_SENSORS; i++)
+  { 
+    flowAS5048BInit(i);
+    initFlowPosition(i);
+  }
   SERIAL_ECHO_START;
   SERIAL_ERRORLNPGM("setup done");
 }
@@ -397,6 +406,20 @@ void loop()
   manage_heater();
   manage_inactivity();
   checkHitEndstops();
+  if (active_extruder == 0)
+  {
+    checkFlowPosition(0);
+  }
+#ifdef NR_OF_FLOW_SENSORS > 1
+  else if (active_extruder == 1)
+  {
+    checkFlowPosition(1);
+  }
+#endif
+  else
+  {
+    /* do nothing */
+  }
 }
 
 void get_command()
@@ -677,7 +700,7 @@ void process_commands()
         prepare_arc_move(false);
       }
       break;
-    case 4: // G4 dwell
+    case 4: // G4  - Dwell S<seconds> or P<milliseconds>
       codenum = 0;
       if(code_seen('P')) codenum = code_value(); // milliseconds to wait
       if(code_seen('S')) codenum = code_value() * 1000; // seconds to wait
@@ -691,7 +714,7 @@ void process_commands()
       }
       break;
       #ifdef FWRETRACT
-      case 10: // G10 retract
+      case 10: // G10 - Retract filament according to settings of M207
       if(!retracted)
       {
         destination[X_AXIS]=current_position[X_AXIS];
@@ -714,7 +737,7 @@ void process_commands()
       }
 
       break;
-      case 11: // G11 retract_recover
+      case 11: // G11 - Retract recover filament according to settings of M208
       if(retracted)
       {
         destination[X_AXIS]=current_position[X_AXIS];
@@ -729,7 +752,7 @@ void process_commands()
       }
       break;
       #endif //FWRETRACT
-    case 28: //G28 Home all Axis one at a time
+    case 28: // G28 - Home all Axis one at a time
       saved_feedrate = feedrate;
       saved_feedmultiply = feedmultiply;
       feedmultiply = 100;
@@ -856,7 +879,7 @@ void process_commands()
       endstops_hit_on_purpose();
       break;
 #ifdef ENABLE_BED_LEVELING_PROBE
-    case 29://G29 - Automatic bed leveling with probing.
+    case 29: //G29 - Automatic bed leveling with probing.
       {
           planner_bed_leveling_factor[X_AXIS] = 0.0;
           planner_bed_leveling_factor[Y_AXIS] = 0.0;
@@ -905,41 +928,59 @@ void process_commands()
           plan_set_position(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS]);
       }
       break;
-    case 30: // G30 Probe Z at current position and report result.
+    case 30: // G30 - Probe Z at current position and report result.
       destination[Z_AXIS] = probeWithCapacitiveSensor(destination[X_AXIS], destination[Y_AXIS]);
       plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], homing_feedrate[Z_AXIS], active_extruder);
       MSerial.println(destination[Z_AXIS]);
       break;
 #endif
-    case 90: // G90
+    case 90: // G90 - Use Absolute Coordinates
       relative_mode = false;
       break;
-    case 91: // G91
+    case 91: // G91 - Use Relative Coordinates
       relative_mode = true;
       break;
-    case 92: // G92
+    case 92: // G92 - Set current position to coordinates given
       if(!code_seen(axis_codes[E_AXIS]))
         st_synchronize();
-      for(int8_t i=0; i < NUM_AXIS; i++) {
-        if(code_seen(axis_codes[i])) {
-           if(i == E_AXIS) {
+      for(int8_t i=0; i < NUM_AXIS; i++) 
+      {
+        if(code_seen(axis_codes[i])) 
+        {
+          if(i == E_AXIS) 
+          {
              current_position[i] = code_value();
              plan_set_e_position(current_position[E_AXIS]);
+             if (active_extruder == 0)
+             {
+               initFlowPosition(0);
+             }
+#ifdef NR_OF_FLOW_SENSORS > 1
+             else if (active_extruder == 1)
+             {
+               initFlowPosition(1);
+             }
+#endif
+             else
+             {
+               /* do nothing */
+             }
            }
-           else {
+           else 
+           {
              current_position[i] = code_value();
              plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
            }
         }
       }
       break;
-    case 1000: // G1000 - store current position&feedrate
+    case 1000: // G1000 - Store the current position/feedrate. (Used for pause&resume handling)
       for(int8_t i=0; i < NUM_AXIS; i++) {
         stored_position[i] = current_position[i];
       }
       stored_feedrate = feedrate;
       break;
-    case 1001: // G1001 - return to stored position from G1000
+    case 1001: // G1001 - Return to stored position from G1000, with the given feedrate, and restore the original feedrate after that G1001
       for(int8_t i=0; i < NUM_AXIS; i++) {
         if(code_seen(axis_codes[i])) {
           destination[i] = current_position[i];
@@ -960,7 +1001,7 @@ void process_commands()
   {
     switch( (int)code_value() )
     {
-    case 17:
+    case 17: // M17  - Enable/Power all stepper motors
         enable_x();
         enable_y();
         enable_z();
@@ -969,7 +1010,7 @@ void process_commands()
         enable_e2();
       break;
 
-    case 42: //M42 -Change pin status via gcode
+    case 42: // M42  - Change pin status via gcode. Use M42 Px Sy to set pin x to value y, when omitting Px the onboard led will be used
       if (code_seen('S'))
       {
         int pin_status = code_value();
@@ -1013,17 +1054,17 @@ void process_commands()
 	    ledRGBWUpdate(r, g, b, w);
       }
       break;
-    case 104: // M104
+    case 104: // M104 - Set extruder target temp
       if(setTargetedHotend(104)){
         break;
       }
       if (code_seen('S')) setTargetHotend(code_value(), tmp_extruder);
       setWatch();
       break;
-    case 140: // M140 set bed temp
+    case 140: // M140 - Set bed target temp
       if (code_seen('S')) setTargetBed(code_value());
       break;
-    case 105 : // M105
+    case 105 : // M105 - Read current temp
       if(setTargetedHotend(105)){
         break;
         }
@@ -1053,8 +1094,8 @@ void process_commands()
         SERIAL_PROTOCOLLN("");
       return;
       break;
-    case 109:
-    {// M109 - Wait for extruder heater to reach target.
+    case 109: // M109 - Wait for extruder heater to reach target temperature
+    {
       if(setTargetedHotend(109)){
         break;
       }
@@ -1115,7 +1156,7 @@ void process_commands()
         previous_millis_cmd = millis();
       }
       break;
-    case 190: // M190 - Wait for bed heater to reach target.
+    case 190: // M190 - Wait for bed heater to reach target temperature
     #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
         if (code_seen('S')) setTargetBed(code_value());
         codenum = millis();
@@ -1141,7 +1182,7 @@ void process_commands()
         break;
 
     #if defined(FAN_PIN) && FAN_PIN > -1
-      case 106: //M106 Fan On
+      case 106: // M106 - Fan on
         if (code_seen('S')){
            fanSpeed=constrain(code_value() * fanSpeedPercent / 100,0,255);
         }
@@ -1149,19 +1190,19 @@ void process_commands()
           fanSpeed = 255 * int(fanSpeedPercent) / 100;
         }
         break;
-      case 107: //M107 Fan Off
+      case 107: // M107 - Fan off
         fanSpeed = 0;
         break;
     #endif //FAN_PIN
     
     #if defined(PS_ON_PIN) && PS_ON_PIN > -1
-      case 80: // M80 - ATX Power On
+      case 80: // M80  - Turn on Power Supply (ATX Power On)
         SET_OUTPUT(PS_ON_PIN); //GND
         WRITE(PS_ON_PIN, PS_ON_AWAKE);
         break;
       #endif
 
-      case 81: // M81 - ATX Power Off
+      case 81: // M81  - Turn off Power Supply (ATX Power Off)
 
       #if defined(SUICIDE_PIN) && SUICIDE_PIN > -1
         st_synchronize();
@@ -1172,14 +1213,15 @@ void process_commands()
       #endif
         break;
 
-    case 82:
+    case 82: // M82  - Set E codes absolute (default)
       axis_relative_modes[3] = false;
       break;
-    case 83:
+    case 83: // M83  - Set E codes relative while in Absolute Coordinates (G90) mode
       axis_relative_modes[3] = true;
       break;
-    case 18: //compatibility
-    case 84: // M84
+    case 18: // Compatibility: M18  - Disable all stepper motors; same as M84
+    case 84: // M84  - Disable steppers until next move,
+             //        or use S<seconds> to specify an inactivity timeout, after which the steppers will be disabled.  S0 to disable the timeout.
       if(code_seen('S')){
         stepper_inactive_time = code_value() * 1000;
       }
@@ -1210,10 +1252,10 @@ void process_commands()
         }
       }
       break;
-    case 85: // M85
+    case 85: // M85  - Set inactivity shutdown timer with parameter S<seconds>. To disable set zero (default)
       if (code_seen('S')) max_inactive_time = code_value() * 1000;
       break;
-    case 92: // M92
+    case 92: // M92  - Set axis_steps_per_unit - same syntax as G92
       for(int8_t i=0; i < NUM_AXIS; i++)
       {
         if(code_seen(axis_codes[i]))
@@ -1228,10 +1270,10 @@ void process_commands()
         }
       }
       break;
-    case 115: // M115
+    case 115: // M115 - Capabilities string
       SERIAL_PROTOCOLPGM(MSG_M115_REPORT);
       break;
-    case 114: // M114
+    case 114: // M114 - Output current position to serial port
       SERIAL_PROTOCOLPGM("X:");
       SERIAL_PROTOCOL(current_position[X_AXIS]);
       SERIAL_PROTOCOLPGM("Y:");
@@ -1256,7 +1298,7 @@ void process_commands()
     case 121: // M121
       enable_endstops(true) ;
       break;
-    case 119: // M119
+    case 119: // M119 - Output Endstop status to serial port
     SERIAL_PROTOCOLLN(MSG_M119_REPORT);
       #if defined(X_MIN_PIN) && X_MIN_PIN > -1
         SERIAL_PROTOCOLPGM(MSG_X_MIN);
@@ -1284,7 +1326,7 @@ void process_commands()
       #endif
       break;
       //TODO: update for all axis, use for loop
-    case 201: // M201
+    case 201: // M201 - Set max acceleration in units/s^2 for print moves (M201 X1000 Y1000)
       for(int8_t i=0; i < NUM_AXIS; i++)
       {
         if(code_seen(axis_codes[i]))
@@ -1296,24 +1338,25 @@ void process_commands()
       reset_acceleration_rates();
       break;
     #if 0 // Not used for Sprinter/grbl gen6
-    case 202: // M202
+    case 202: // M202 - Set max acceleration in units/s^2 for travel moves (M202 X1000 Y1000) Unused in Marlin!!
       for(int8_t i=0; i < NUM_AXIS; i++) {
         if(code_seen(axis_codes[i])) axis_travel_steps_per_sqr_second[i] = code_value() * axis_steps_per_unit[i];
       }
       break;
     #endif
-    case 203: // M203 max feedrate mm/sec
+    case 203: // M203 - Set maximum feedrate that your machine can sustain (M203 X200 Y200 Z300 E10000) in mm/sec
       for(int8_t i=0; i < NUM_AXIS; i++) {
         if(code_seen(axis_codes[i])) max_feedrate[i] = code_value();
       }
       break;
-    case 204: // M204 acceleration: S - normal moves;  T - filament only moves
+    case 204: // M204 - Set default acceleration: S normal moves T filament only moves (M204 S3000 T7000) im mm/sec^2.  
+              //        Also sets minimum segment time in ms (B20000) to prevent buffer underruns and M20 minimum feedrate
       {
         if(code_seen('S')) acceleration = code_value() ;
         if(code_seen('T')) retract_acceleration = code_value() ;
       }
       break;
-    case 205: //M205 advanced settings:  minimum travel speed S=while printing T=travel only,  B=minimum segment time X= maximum xy jerk, Z=maximum Z jerk
+    case 205: // M205 - Advanced settings:  minimum travel speed S=while printing T=travel only,  B=minimum segment time X= maximum xy jerk, Z=maximum Z jerk, E=maximum E jerk
     {
       if(code_seen('S')) minimumfeedrate = code_value();
       if(code_seen('T')) mintravelfeedrate = code_value();
@@ -1323,14 +1366,14 @@ void process_commands()
       if(code_seen('E')) max_e_jerk = code_value() ;
     }
     break;
-    case 206: // M206 additional homing offset
+    case 206: // M206 - Set additional homeing offset 
       for(int8_t i=0; i < 3; i++)
       {
         if(code_seen(axis_codes[i])) add_homeing[i] = code_value();
       }
       break;
     #ifdef FWRETRACT
-    case 207: //M207 - set retract length S[positive mm] F[feedrate mm/min] Z[additional zlift/hop]
+    case 207: // M207 - Set retract length S[positive mm] F[feedrate mm/sec] Z[additional zlift/hop]
     {
       if(code_seen('S'))
       {
@@ -1345,7 +1388,7 @@ void process_commands()
         retract_zlift = code_value() ;
       }
     }break;
-    case 208: // M208 - set retract recover length S[positive mm surplus to the M207 S*] F[feedrate mm/min]
+    case 208: // M208 - Set recover=unretract length S[positive mm surplus to the M207 S*] F[feedrate mm/sec]
     {
       if(code_seen('S'))
       {
@@ -1358,7 +1401,7 @@ void process_commands()
     }break;
     #endif // FWRETRACT
     #if EXTRUDERS > 1
-    case 218: // M218 - set hotend offset (in mm), T<extruder_number> X<offset_on_X> Y<offset_on_Y> Z<offset_on_Z>
+    case 218: // M218 - Set hotend offset (in mm): T<extruder_number> X<offset_on_X> Y<offset_on_Y> Z<offset_on_Z>
     {
       if(setTargetedHotend(218)){
         break;
@@ -1389,7 +1432,7 @@ void process_commands()
       SERIAL_ECHOLN("");
     }break;
     #endif
-    case 220: // M220 S<factor in percent>- set speed factor override percentage
+    case 220: // M220 S<factor in percent> - Set speed factor override percentage
     {
       if(code_seen('S'))
       {
@@ -1397,7 +1440,7 @@ void process_commands()
       }
     }
     break;
-    case 221: // M221 S<factor in percent>- set extrude factor override percentage
+    case 221: // M221 S<factor in percent> - Set extrude factor override percentage
     {
       if(code_seen('S'))
       {
@@ -1407,7 +1450,7 @@ void process_commands()
     break;
 
     #ifdef PIDTEMP
-    case 301: // M301
+    case 301: // M301 - Set PID parameters P I and D
       {
         if(code_seen('P')) Kp = code_value();
         if(code_seen('I')) Ki = scalePID_i(code_value());
@@ -1426,7 +1469,7 @@ void process_commands()
       break;
     #endif //PIDTEMP
     #ifdef PIDTEMPBED
-    case 304: // M304
+    case 304: // M304 - Set bed PID parameters P I and D
       {
         if(code_seen('P')) bedKp = code_value();
         if(code_seen('I')) bedKi = scalePID_i(code_value());
@@ -1445,15 +1488,15 @@ void process_commands()
       break;
     #endif //PIDTEMP
     #ifdef PREVENT_DANGEROUS_EXTRUDE
-    case 302: // allow cold extrudes, or set the minimum extrude temperature
+    case 302: // M302 - Allow cold extrudes, or set the minimum extrude S<temperature>
     {
 	  float temp = .0;
 	  if (code_seen('S')) temp=code_value();
       set_extrude_min_temp(temp);
     }
     break;
-	#endif
-    case 303: // M303 PID autotune
+    #endif
+    case 303: // M303 - PID relay autotune S<temperature> sets the target temperature. (default target temperature = 150C)
     {
       float temp = 150.0;
       int e=0;
@@ -1467,7 +1510,7 @@ void process_commands()
     }
     break;
 #ifdef ENABLE_BED_LEVELING_PROBE
-    case 310://M310, single cap sensor read.
+    case 310: // M310 - Single cap sensor read.
       {
         i2cCapacitanceStart();
         uint16_t value;
@@ -1537,18 +1580,17 @@ void process_commands()
       }
     break;
 #endif//ENABLE_BED_LEVELING_PROBE
-    case 400: // M400 finish all moves
+    case 400: // M400 - Finish all moves
     {
       st_synchronize();
     }
     break;
-    case 401: // M401 quickstop - Abort all the planned moves. This will stop the head mid-move, so most likely the head will be out of sync with the stepper position after this.
+    case 401: // M401 - Quickstop - Abort all the planned moves. This will stop the head mid-move, so most likely the head will be out of sync with the stepper position after this
     {
       quickStop();
     }
     break;
-
-    case 907: // M907 Set digital trimpot motor current using axis codes.
+    case 907: // M907 - Set digital trimpot motor current using axis codes
     {
       #if defined(MOTOR_CURRENT_PWM_XY_PIN) && MOTOR_CURRENT_PWM_XY_PIN > -1
         if(code_seen('X')) digipot_current(0, code_value());
@@ -1561,10 +1603,28 @@ void process_commands()
       #endif
     }
     break;
-    case 999: // M999: Restart after being stopped
+    case 999: // M999 - Restart after being stopped by error
+    {
       Stopped = false;
       gcode_LastN = Stopped_gcode_LastN;
       FlushSerialRequestResend();
+    }
+    break;
+    case 11000: // M11000 - Read angle filament sensor (AS5048B). S: sensor (starting from 0)
+    {
+        int s = 0;
+        if (code_seen('S') && (code_value() >= 0) && (code_value() < NR_OF_FLOW_SENSORS))
+        {          
+           s = code_value();
+        }
+        flowAS5048BStart(s);
+        uint16_t value;
+        while (!flowAS5048BDone(s, value))
+        {
+            /* do nothing */
+        }
+        MSerial.println(value);
+    }
     break;
     }
   }

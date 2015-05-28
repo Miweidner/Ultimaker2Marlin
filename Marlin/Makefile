@@ -213,10 +213,10 @@ SRC = wiring.c \
 	wiring_shift.c WInterrupts.c
 CXXSRC = WMath.cpp WString.cpp Print.cpp Marlin_main.cpp	\
 	MarlinSerial.cpp motion_control.cpp planner.cpp		\
-	stepper.cpp temperature.cpp \
+	stepper.cpp temperature.cpp flow.cpp \
 	watchdog.cpp electronics_test.cpp cap_sense_probe.cpp
 CXXSRC += i2c_capacitance.cpp i2c_driver.cpp \
-	fan_driver.cpp temperature_ADS101X.cpp led_rgbw_pca9632.cpp
+	fan_driver.cpp temperature_ADS101X.cpp led_rgbw_pca9632.cpp flow_AS5048B.cpp
 
 #Check for Arduino 1.0.0 or higher and use the correct sourcefiles for that version
 ifeq ($(shell [ $(ARDUINO_VERSION) -ge 100 ] && echo true), true)

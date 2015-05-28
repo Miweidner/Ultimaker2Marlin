@@ -67,6 +67,11 @@
 #define EXTRUDERS 2
 #endif
 
+// This defines the number of flow sensors
+#ifndef NR_OF_FLOW_SENSORS
+#define NR_OF_FLOW_SENSORS (1)
+#endif
+
 //// The following define selects which power supply you have. Please choose the one that matches your setup
 // 1 = ATX
 // 2 = X-Box 360 203Watts (the blue wire connected to PS_ON and the red wire to VCC)
