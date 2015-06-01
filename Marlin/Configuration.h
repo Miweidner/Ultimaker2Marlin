@@ -69,7 +69,7 @@
 
 // This defines the number of flow sensors
 #ifndef NR_OF_FLOW_SENSORS
-#define NR_OF_FLOW_SENSORS (1)
+#define NR_OF_FLOW_SENSORS (2)
 #endif
 
 //// The following define selects which power supply you have. Please choose the one that matches your setup
