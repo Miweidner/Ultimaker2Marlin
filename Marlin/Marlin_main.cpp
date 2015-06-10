@@ -960,10 +960,6 @@ void process_commands()
           plan_set_position(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS]);
       }
       break;
-G29_ERROR:
-      {
-      }
-      break;
     case 30: // G30 - Probe Z at current position and report result.
       destination[Z_AXIS] = probeWithCapacitiveSensor(destination[X_AXIS], destination[Y_AXIS]);
       plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], homing_feedrate[Z_AXIS], active_extruder);

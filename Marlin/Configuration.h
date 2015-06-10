@@ -16,7 +16,7 @@
 // SERIAL_PORT selects which serial port should be used for communication with the host.
 // This allows the connection of wireless adapters (for instance) to non-default port pins.
 // Serial port 0 is still used by the Arduino bootloader regardless of this setting.
-#define SERIAL_PORT 0
+#define SERIAL_PORT 2
 
 // This determines the communication speed of the printer
 //#define BAUDRATE 250000
@@ -64,7 +64,7 @@
 
 // This defines the number of extruders
 #ifndef EXTRUDERS
-#define EXTRUDERS 1
+#define EXTRUDERS 2
 #endif
 
 // This defines the number of flow sensors
@@ -305,7 +305,7 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #define X_MIN_POS 0
 #define Y_MAX_POS 230
 #define Y_MIN_POS 0
-#define Z_MAX_POS 230
+#define Z_MAX_POS 240
 #define Z_MIN_POS 0
 
 #define X_MAX_LENGTH (X_MAX_POS - X_MIN_POS)
