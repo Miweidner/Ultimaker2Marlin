@@ -766,6 +766,11 @@ void quickStop()
     plan_discard_current_block();
   current_block = NULL;
   ENABLE_STEPPER_DRIVER_INTERRUPT();
+  current_position[X_AXIS] = float(st_get_position(X_AXIS))/axis_steps_per_unit[X_AXIS];
+  current_position[Y_AXIS] = float(st_get_position(Y_AXIS))/axis_steps_per_unit[Y_AXIS];
+  current_position[Z_AXIS] = float(st_get_position(Z_AXIS))/axis_steps_per_unit[Z_AXIS];
+  current_position[E_AXIS] = float(st_get_position(E_AXIS))/axis_steps_per_unit[E_AXIS];
+  plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
 }
 
 void digipot_init() //Initialize Digipot Motor Current

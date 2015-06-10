@@ -16,7 +16,7 @@
 // SERIAL_PORT selects which serial port should be used for communication with the host.
 // This allows the connection of wireless adapters (for instance) to non-default port pins.
 // Serial port 0 is still used by the Arduino bootloader regardless of this setting.
-#define SERIAL_PORT 2
+#define SERIAL_PORT 0
 
 // This determines the communication speed of the printer
 //#define BAUDRATE 250000
@@ -64,7 +64,7 @@
 
 // This defines the number of extruders
 #ifndef EXTRUDERS
-#define EXTRUDERS 2
+#define EXTRUDERS 1
 #endif
 
 // This defines the number of flow sensors
@@ -305,7 +305,7 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #define X_MIN_POS 0
 #define Y_MAX_POS 230
 #define Y_MIN_POS 0
-#define Z_MAX_POS 240
+#define Z_MAX_POS 230
 #define Z_MIN_POS 0
 
 #define X_MAX_LENGTH (X_MAX_POS - X_MIN_POS)
@@ -370,11 +370,11 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #ifdef ENABLE_BED_LEVELING_PROBE
 # define CONFIG_BED_LEVELING_Z_HEIGHT 10
 # define CONFIG_BED_LEVELING_POINT1_X 123
-# define CONFIG_BED_LEVELING_POINT1_Y 200
-# define CONFIG_BED_LEVELING_POINT2_X 10
-# define CONFIG_BED_LEVELING_POINT2_Y 20
-# define CONFIG_BED_LEVELING_POINT3_X 220
-# define CONFIG_BED_LEVELING_POINT3_Y 20
+# define CONFIG_BED_LEVELING_POINT1_Y 180
+# define CONFIG_BED_LEVELING_POINT2_X 20
+# define CONFIG_BED_LEVELING_POINT2_Y 25
+# define CONFIG_BED_LEVELING_POINT3_X 210
+# define CONFIG_BED_LEVELING_POINT3_Y 25
 # define CONFIG_FALL_OFF_BED_LEVELING_HEIGHT 10.0
 # define CONFIG_MAX_BED_LEVELING_HEIGHT 20.0
 # define CONFIG_BED_LEVEL_PROBE_REPEAT 3

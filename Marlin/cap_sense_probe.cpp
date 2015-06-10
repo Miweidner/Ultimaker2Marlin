@@ -7,6 +7,10 @@
 
 static const int sample_count = 100;
 static uint16_t samples[sample_count];
+uint8_t deviation_error = 0;
+
+
+#define MAX_LEVEL_COUNT 3
 
 static uint16_t captureSample()
 {
@@ -20,6 +24,7 @@ static uint16_t captureSample()
             if (value != previous_value)
             {
                 previous_value = value;
+                
                 return value;
             }
             i2cCapacitanceStart();
@@ -48,6 +53,7 @@ static uint16_t calculatedWeightedAverage()
     }
     standard_deviation /= sample_count;
     standard_deviation = sqrt(standard_deviation);
+
     
     uint32_t weighted_average = 0;
     uint16_t count = 0;
@@ -59,23 +65,29 @@ static uint16_t calculatedWeightedAverage()
             weighted_average += samples[n];
         }
     }
+    if (!deviation_error && standard_deviation*100.0/(weighted_average / float(count)) > 2)
+    {
+        MSerial.print("ERROR: bed leveling detects too much vibration, standard_deviation/avg*100: ");
+        MSerial.println(standard_deviation*100.0/(weighted_average / float(count)), 5 );
+        deviation_error++;
+    }
+
     return weighted_average / count;
 }
 
-float probeWithCapacitiveSensor(float x, float y)
+float probeWithCapacitiveSensorOnce(float x, float y, float z_distance, float feedrate)
 {
     const int diff_average_count = 6;
 
-    float feedrate = 0.2;
     
     float z_target = 0.0;
-    float z_distance = 5.0;
-
     float z_position = 0.0;
+    uint8_t foundZeroPosition = 0;
     
+
     plan_buffer_line(x, y, z_target + z_distance, current_position[E_AXIS], homing_feedrate[Z_AXIS], active_extruder);
     st_synchronize();
-    plan_buffer_line(x, y, z_target - z_distance, current_position[E_AXIS], feedrate, active_extruder);
+    plan_buffer_line(x, y, z_target - 3, current_position[E_AXIS], feedrate, active_extruder);
 
     uint16_t previous_sensor_average = 0;
     int16_t diff_average = 0;
@@ -85,7 +97,11 @@ float probeWithCapacitiveSensor(float x, float y)
     for(uint8_t n=0; n<diff_average_count; n++)
         diff_history[n] = 0;
     
-    uint8_t noise_measure_delay = 20;
+    uint8_t noise_measure_delay = 5;
+    int steps = 0;
+    int levelled_count = 0;
+    float levelled_z_sum = 0;
+
 
     while(blocks_queued())
     {
@@ -97,9 +113,6 @@ float probeWithCapacitiveSensor(float x, float y)
         z_position /= sample_count;
         
         uint16_t average = calculatedWeightedAverage();
-        MSerial.print(z_position);
-        MSerial.print(' ');
-        MSerial.println(float(average) / 100.0);
         
         if (previous_sensor_average == 0)
         {
@@ -117,23 +130,68 @@ float probeWithCapacitiveSensor(float x, float y)
                 diff_history_pos = 0;
             
             previous_sensor_average = average;
-            
             if (noise_measure_delay > 0)
             {
                 noise_measure_delay --;
             }
             else
             {
-                if (diff * diff_average_count * 2 < diff_average)
+                if (foundZeroPosition == 0)
                 {
-                    quickStop();
-                    //TOFIX: quickStop should update the planner step position instead of the code here.
-                    current_position[Z_AXIS] = float(st_get_position(Z_AXIS))/axis_steps_per_unit[Z_AXIS];
-                    plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
+                    if (diff * diff_average_count * 2 < diff_average)
+                    {
+                        quickStop();
+                        foundZeroPosition++;
+
+                        plan_buffer_line(x, y, current_position[Z_AXIS]+2, current_position[E_AXIS], feedrate, active_extruder);
+                    }
+                }
+                else
+                {
+                    if (diff < 0)
+                    {
+                        quickStop();
+
+                        foundZeroPosition++;
+                    }
+                    steps++;
                 }
             }
         }
     }
-    
-    return z_position;
+    if (steps > 3)
+    {
+        MSerial.print("ERROR:  steps: ");
+        MSerial.println(steps);
+    }
+    if (foundZeroPosition != 2)
+    {
+        MSerial.print("ERROR: did not find zero pos ");
+        MSerial.println(int(foundZeroPosition));
+    }
+
+    return (foundZeroPosition == 2 && steps <= 3)?current_position[Z_AXIS]:200;
+}
+
+float probeWithCapacitiveSensor(float x, float y)
+{
+    int tests = MAX_LEVEL_COUNT;
+    float height_sum = 0;
+    float height_average = 0;
+    float startHeight = 3;
+    float feedrate = 0.4;
+    float height_count;
+    deviation_error = 0;
+
+    for(int i = 1; i < tests+1; i++)
+    {
+        float tmp = probeWithCapacitiveSensorOnce(x,y,startHeight, feedrate/i);
+        if (tmp > 50)
+            return tmp;
+        height_sum += tmp*i;
+        height_count += i;
+        height_average = height_sum/height_count;
+        startHeight = height_average+0.7*((11-i)/10.0);
+    }
+    return height_average;
 }

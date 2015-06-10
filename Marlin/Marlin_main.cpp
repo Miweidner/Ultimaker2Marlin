@@ -673,6 +673,14 @@ static void homeaxis(int axis) {
 }
 #define HOMEAXIS(LETTER) homeaxis(LETTER##_AXIS)
 
+
+inline void process_error(const char* err)
+{
+    MSerial.print("ERROR: bed leveling failed ");
+    MSerial.println(err);
+}
+
+
 void process_commands()
 {
   unsigned long codenum; //throw away variable
@@ -891,6 +899,12 @@ void process_commands()
           plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], homing_feedrate[X_AXIS], active_extruder);
           st_synchronize();
           float height_1 = probeWithCapacitiveSensor(CONFIG_BED_LEVELING_POINT1_X, CONFIG_BED_LEVELING_POINT1_Y);
+          if (height_1 > 50)
+          {
+              process_error("position 1");
+              break;
+          }
+
 
           destination[Z_AXIS] = CONFIG_BED_LEVELING_Z_HEIGHT;
           plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], homing_feedrate[Z_AXIS], active_extruder);
@@ -899,6 +913,12 @@ void process_commands()
           plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], homing_feedrate[X_AXIS], active_extruder);
           st_synchronize();
           float height_2 = probeWithCapacitiveSensor(CONFIG_BED_LEVELING_POINT2_X, CONFIG_BED_LEVELING_POINT2_Y);
+          if (height_2 > 50)
+          {
+              process_error("position 2");
+              break;
+          }
+
 
           destination[Z_AXIS] = CONFIG_BED_LEVELING_Z_HEIGHT;
           plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], homing_feedrate[Z_AXIS], active_extruder);
@@ -907,25 +927,41 @@ void process_commands()
           plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], homing_feedrate[X_AXIS], active_extruder);
           st_synchronize();
           float height_3 = probeWithCapacitiveSensor(CONFIG_BED_LEVELING_POINT3_X, CONFIG_BED_LEVELING_POINT3_Y);
+          if (height_3 > 50)
+          {
+              process_error("position 3");
+              break;
+          }
+
+
           destination[Z_AXIS] = height_3;
           //Position the head at exactly the height, so we can use this as Z0 later.
           plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], homing_feedrate[X_AXIS], active_extruder);
           st_synchronize();
 
+          MSerial.print("height_1: ");
           MSerial.println(height_1, 5);
+          MSerial.print("height_2: ");          
           MSerial.println(height_2, 5);
+          MSerial.print("height_3: ");          
           MSerial.println(height_3, 5);
           
           //Set the X and Y skew factors for how skewed the bed is (this assumes the leveling points are 1 in the back, and 2 at the front)
           planner_bed_leveling_factor[X_AXIS] = (height_3 - height_2) / (CONFIG_BED_LEVELING_POINT3_X - CONFIG_BED_LEVELING_POINT2_X);
           planner_bed_leveling_factor[Y_AXIS] = ((height_2 + height_3) / 2.0 - height_1) / (CONFIG_BED_LEVELING_POINT3_Y - CONFIG_BED_LEVELING_POINT1_Y);
-          
+
+          MSerial.print("bed_leveling_factor X: ");
           MSerial.println(planner_bed_leveling_factor[X_AXIS], 5);
+          MSerial.print("bed_leveling_factor Y: ");
           MSerial.println(planner_bed_leveling_factor[Y_AXIS], 5);
           
           //Correct the Z position. So Z0 is always on top of the bed. We are currently positioned at point 3, on top of the bed.
           destination[Z_AXIS] = 0.0;
           plan_set_position(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS]);
+      }
+      break;
+G29_ERROR:
+      {
       }
       break;
     case 30: // G30 - Probe Z at current position and report result.
