@@ -24,7 +24,7 @@ static uint16_t captureSample()
             if (value != previous_value)
             {
                 previous_value = value;
-                
+
                 return value;
             }
             i2cCapacitanceStart();
@@ -54,7 +54,6 @@ static uint16_t calculatedWeightedAverage()
     standard_deviation /= sample_count;
     standard_deviation = sqrt(standard_deviation);
 
-    
     uint32_t weighted_average = 0;
     uint16_t count = 0;
     for(uint8_t n=0; n<sample_count; n++)
@@ -78,12 +77,9 @@ static uint16_t calculatedWeightedAverage()
 float probeWithCapacitiveSensorOnce(float x, float y, float z_distance, float feedrate)
 {
     const int diff_average_count = 6;
-
-    
     float z_target = 0.0;
     float z_position = 0.0;
     uint8_t foundZeroPosition = 0;
-    
 
     plan_buffer_line(x, y, z_target + z_distance, current_position[E_AXIS], homing_feedrate[Z_AXIS], active_extruder);
     st_synchronize();
@@ -96,7 +92,7 @@ float probeWithCapacitiveSensorOnce(float x, float y, float z_distance, float fe
 
     for(uint8_t n=0; n<diff_average_count; n++)
         diff_history[n] = 0;
-    
+
     uint8_t noise_measure_delay = 5;
     int steps = 0;
     int levelled_count = 0;
@@ -111,9 +107,9 @@ float probeWithCapacitiveSensorOnce(float x, float y, float z_distance, float fe
             z_position += float(st_get_position(Z_AXIS))/axis_steps_per_unit[Z_AXIS];
         }
         z_position /= sample_count;
-        
+
         uint16_t average = calculatedWeightedAverage();
-        
+
         if (previous_sensor_average == 0)
         {
             previous_sensor_average = average;
@@ -121,14 +117,14 @@ float probeWithCapacitiveSensorOnce(float x, float y, float z_distance, float fe
         else
         {
             int16_t diff = average - previous_sensor_average;
-            
+
             diff_average -= diff_history[diff_history_pos];
             diff_average += diff;
             diff_history[diff_history_pos] = diff;
             diff_history_pos ++;
             if (diff_history_pos >= diff_average_count)
                 diff_history_pos = 0;
-            
+
             previous_sensor_average = average;
             if (noise_measure_delay > 0)
             {

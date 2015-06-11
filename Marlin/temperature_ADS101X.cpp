@@ -48,7 +48,7 @@ static uint8_t i2c_adc_setup_buffer[3];
 
 static i2cCommand i2c_adc_pointer_command;
 static uint8_t i2c_adc_pointer_buffer[1];
-    
+
 static i2cCommand i2c_adc_read_command;
 static uint8_t i2c_adc_read_buffer[2];
 
@@ -72,7 +72,7 @@ void initTemperatureADS101X()
 
     i2c_adc_pointer_buffer[0] = ADS101X_REGISTER_DATA;
     i2cDriverExecuteAndWait(&i2c_adc_pointer_command);
-    
+
     i2cDriverExecuteAndWait(&i2c_adc_read_command);
     int adc_offset = int(i2c_adc_read_buffer[0]) << 4 | int(i2c_adc_read_buffer[1]) >> 4;
 }

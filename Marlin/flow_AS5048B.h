@@ -19,7 +19,7 @@ void flowAS5048BStart(uint8_t n);
 
 /*!
  * \brief        Read angle value of sensor AS5048B.
- * 
+ *
  * \param n      number of the sensor.
  * \param value  angle value read
  */

@@ -23,11 +23,11 @@ void i2cDriverInit()
     SET_OUTPUT(I2C_SDA_PIN);
     SET_OUTPUT(I2C_SCL_PIN);
     //TODO: We could generate a fake stop condition here.
-    
+
     //Enable the internal pullups for the I2C driver. While the board has external pullups as well, this does not harm the functionality.
     WRITE(I2C_SCL_PIN, 1);
     WRITE(I2C_SDA_PIN, 1);
-    
+
     //Set the clock frequency for the I2C by the following formula:
     //ClockFreq = (F_CPU) / (16 + 2*TWBR * 4^TWPS)
     //TWPS is set in TWSR to 0 for a prescaler of *1.
@@ -55,7 +55,7 @@ void i2cDriverPlan(i2cCommand* command)
     if (!command->finished)
         return;
     command->finished = false;
-    
+
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
         if (current_command == NULL)
@@ -64,7 +64,7 @@ void i2cDriverPlan(i2cCommand* command)
             // but it could be that the stop condition is still being generated after the previous command was send,
             // at which point we want to wait for this before we initiate a new START action.
             loop_until_bit_is_clear(TWCR, TWSTO);
-            
+
             current_command = command;
             current_command_buffer_index = 0;
             TWCR = _BV(TWIE) | _BV(TWEN) | _BV(TWSTA) | _BV(TWINT); //START will be transmitted, interrupt will be generated.

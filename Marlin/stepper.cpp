@@ -396,7 +396,7 @@ ISR(TIMER1_COMPA_vect)
     if ((out_bits & (1<<Z_AXIS)) != 0) {   // -direction
       WRITE(Z_DIR_PIN,INVERT_Z_DIR);
 
-	  #ifdef Z_DUAL_STEPPER_DRIVERS
+      #ifdef Z_DUAL_STEPPER_DRIVERS
         WRITE(Z2_DIR_PIN,INVERT_Z_DIR);
       #endif
 
@@ -417,7 +417,7 @@ ISR(TIMER1_COMPA_vect)
     else { // +direction
       WRITE(Z_DIR_PIN,!INVERT_Z_DIR);
 
-	  #ifdef Z_DUAL_STEPPER_DRIVERS
+      #ifdef Z_DUAL_STEPPER_DRIVERS
         WRITE(Z2_DIR_PIN,!INVERT_Z_DIR);
       #endif
 
@@ -472,7 +472,7 @@ ISR(TIMER1_COMPA_vect)
       if (counter_z > 0) {
         WRITE(Z_STEP_PIN, !INVERT_Z_STEP_PIN);
 
-		#ifdef Z_DUAL_STEPPER_DRIVERS
+        #ifdef Z_DUAL_STEPPER_DRIVERS
           WRITE(Z2_STEP_PIN, !INVERT_Z_STEP_PIN);
         #endif
 
@@ -480,7 +480,7 @@ ISR(TIMER1_COMPA_vect)
         count_position[Z_AXIS]+=count_direction[Z_AXIS];
         WRITE(Z_STEP_PIN, INVERT_Z_STEP_PIN);
 
-		#ifdef Z_DUAL_STEPPER_DRIVERS
+        #ifdef Z_DUAL_STEPPER_DRIVERS
           WRITE(Z2_STEP_PIN, INVERT_Z_STEP_PIN);
         #endif
       }
@@ -492,7 +492,7 @@ ISR(TIMER1_COMPA_vect)
         count_position[E_AXIS]+=count_direction[E_AXIS];
         WRITE_E_STEP(INVERT_E_STEP_PIN);
       }
-      
+
       step_events_completed += 1;
       if(step_events_completed >= current_block->step_event_count) break;
     }

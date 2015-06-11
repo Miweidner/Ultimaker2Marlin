@@ -93,7 +93,7 @@ static volatile bool temp_meas_ready = false;
   static float temp_iState_min_bed;
   static float temp_iState_max_bed;
 #else //PIDTEMPBED
-	static unsigned long  previous_millis_bed_heater;
+  static unsigned long  previous_millis_bed_heater;
 #endif //PIDTEMPBED
   static unsigned char soft_pwm[EXTRUDERS];
   static unsigned char soft_pwm_bed;
@@ -311,8 +311,8 @@ void updatePID()
 }
 
 int getHeaterPower(int heater) {
-	if (heater<0)
-		return soft_pwm_bed;
+  if (heater<0)
+    return soft_pwm_bed;
   return soft_pwm[heater];
 }
 
@@ -329,11 +329,11 @@ void manage_heater()
   #ifdef HEATER_0_USES_MAX6675
   if (current_temperature[0] > 1023 || current_temperature[0] > HEATER_0_MAXTEMP)
   {
-	  max_temp_error(0);
+    max_temp_error(0);
   }
   if (current_temperature[0] == 0  || current_temperature[0] < HEATER_0_MINTEMP)
   {
-	  min_temp_error(0);
+    min_temp_error(0);
   }
   #endif
   for(int e = 0; e < EXTRUDERS; e++)
@@ -477,72 +477,72 @@ void manage_heater()
   #if TEMP_SENSOR_BED != 0
 
   #ifdef PIDTEMPBED
-    pid_input = current_temperature_bed;
+  pid_input = current_temperature_bed;
 
-    #ifndef PID_OPENLOOP
-		  pid_error_bed = target_temperature_bed - pid_input;
-		  pTerm_bed = bedKp * pid_error_bed;
-		  temp_iState_bed += pid_error_bed;
-		  temp_iState_bed = constrain(temp_iState_bed, temp_iState_min_bed, temp_iState_max_bed);
-		  iTerm_bed = bedKi * temp_iState_bed;
+  #ifndef PID_OPENLOOP
+  pid_error_bed = target_temperature_bed - pid_input;
+  pTerm_bed = bedKp * pid_error_bed;
+  temp_iState_bed += pid_error_bed;
+  temp_iState_bed = constrain(temp_iState_bed, temp_iState_min_bed, temp_iState_max_bed);
+  iTerm_bed = bedKi * temp_iState_bed;
 
-		  //K1 defined in Configuration.h in the PID settings
-		  #define K2 (1.0-K1)
-		  dTerm_bed= (bedKd * (pid_input - temp_dState_bed))*K2 + (K1 * dTerm_bed);
-		  temp_dState_bed = pid_input;
+  //K1 defined in Configuration.h in the PID settings
+  #define K2 (1.0-K1)
+  dTerm_bed= (bedKd * (pid_input - temp_dState_bed))*K2 + (K1 * dTerm_bed);
+  temp_dState_bed = pid_input;
 
-		  pid_output = constrain(pTerm_bed + iTerm_bed - dTerm_bed, 0, MAX_BED_POWER);
+  pid_output = constrain(pTerm_bed + iTerm_bed - dTerm_bed, 0, MAX_BED_POWER);
 
-    #else
-      pid_output = constrain(target_temperature_bed, 0, MAX_BED_POWER);
-    #endif //PID_OPENLOOP
+  #else
+  pid_output = constrain(target_temperature_bed, 0, MAX_BED_POWER);
+  #endif //PID_OPENLOOP
 
-	  if((current_temperature_bed > BED_MINTEMP) && (current_temperature_bed < BED_MAXTEMP))
-	  {
-	    soft_pwm_bed = (int)pid_output >> 1;
-	  }
-	  else {
-	    soft_pwm_bed = 0;
-	  }
+  if((current_temperature_bed > BED_MINTEMP) && (current_temperature_bed < BED_MAXTEMP))
+  {
+    soft_pwm_bed = (int)pid_output >> 1;
+  }
+  else {
+    soft_pwm_bed = 0;
+  }
 
-    #elif !defined(BED_LIMIT_SWITCHING)
-      // Check if temperature is within the correct range
-      if((current_temperature_bed > BED_MINTEMP) && (current_temperature_bed < BED_MAXTEMP))
-      {
-        if(current_temperature_bed >= target_temperature_bed)
-        {
-          soft_pwm_bed = 0;
-        }
-        else
-        {
-          soft_pwm_bed = MAX_BED_POWER>>1;
-        }
-      }
-      else
-      {
-        soft_pwm_bed = 0;
-        WRITE(HEATER_BED_PIN,LOW);
-      }
-    #else //#ifdef BED_LIMIT_SWITCHING
-      // Check if temperature is within the correct band
-      if((current_temperature_bed > BED_MINTEMP) && (current_temperature_bed < BED_MAXTEMP))
-      {
-        if(current_temperature_bed > target_temperature_bed + BED_HYSTERESIS)
-        {
-          soft_pwm_bed = 0;
-        }
-        else if(current_temperature_bed <= target_temperature_bed - BED_HYSTERESIS)
-        {
-          soft_pwm_bed = MAX_BED_POWER>>1;
-        }
-      }
-      else
-      {
-        soft_pwm_bed = 0;
-        WRITE(HEATER_BED_PIN,LOW);
-      }
-    #endif
+  #elif !defined(BED_LIMIT_SWITCHING)
+  // Check if temperature is within the correct range
+  if((current_temperature_bed > BED_MINTEMP) && (current_temperature_bed < BED_MAXTEMP))
+  {
+    if(current_temperature_bed >= target_temperature_bed)
+    {
+      soft_pwm_bed = 0;
+    }
+    else
+    {
+      soft_pwm_bed = MAX_BED_POWER>>1;
+    }
+  }
+  else
+  {
+    soft_pwm_bed = 0;
+    WRITE(HEATER_BED_PIN,LOW);
+  }
+  #else //#ifdef BED_LIMIT_SWITCHING
+  // Check if temperature is within the correct band
+  if((current_temperature_bed > BED_MINTEMP) && (current_temperature_bed < BED_MAXTEMP))
+  {
+    if(current_temperature_bed > target_temperature_bed + BED_HYSTERESIS)
+    {
+      soft_pwm_bed = 0;
+    }
+    else if(current_temperature_bed <= target_temperature_bed - BED_HYSTERESIS)
+    {
+      soft_pwm_bed = MAX_BED_POWER>>1;
+    }
+  }
+  else
+  {
+    soft_pwm_bed = 0;
+    WRITE(HEATER_BED_PIN,LOW);
+  }
   #endif
+#endif
 }
 
 #define PGM_RD_W(x)   (short)pgm_read_word(&x)
@@ -628,7 +628,7 @@ static float analog2tempBed(int raw) {
 static void updateTemperaturesFromRawValues()
 {
 #ifdef HEATER_0_USES_MAX6675
-	current_temperature_raw[0] = read_max6675();
+  current_temperature_raw[0] = read_max6675();
 #endif
 
     for(uint8_t e=0;e<EXTRUDERS;e++)
@@ -652,7 +652,7 @@ void tp_init()
 #if defined(HEATER_0_USES_ADS101X) || defined(HEATER_1_USES_ADS101X) || defined(HEATER_2_USES_ADS101X) || defined(BED_USES_ADS101X)
     initTemperatureADS101X();
 #endif
-    
+
 #if (MOTHERBOARD == 80) && ((TEMP_SENSOR_0==-1)||(TEMP_SENSOR_1==-1)||(TEMP_SENSOR_2==-1)||(TEMP_SENSOR_BED==-1))
   //disable RUMBA JTAG in case the thermocouple extension is plugged on top of JTAG connector
   MCUCR=(1<<JTD);
@@ -944,7 +944,7 @@ static int read_max6675()
   max6675_previous_millis = millis();
   max6675_temp = 0;
 
-  #ifdef	PRR
+  #ifdef PRR
     PRR &= ~(1<<PRSPI);
   #elif defined PRR0
     PRR0 &= ~(1<<PRSPI);
@@ -1289,24 +1289,22 @@ ISR(TIMER0_COMPB_vect)
 
 float scalePID_i(float i)
 {
-	return i*PID_dT;
+  return i*PID_dT;
 }
 
 float unscalePID_i(float i)
 {
-	return i/PID_dT;
+  return i/PID_dT;
 }
 
 float scalePID_d(float d)
 {
-    return d/PID_dT;
+  return d/PID_dT;
 }
 
 float unscalePID_d(float d)
 {
-	return d*PID_dT;
+  return d*PID_dT;
 }
 
 #endif //PIDTEMP
-
-

@@ -11,7 +11,7 @@ void initFans()
 {
     i2cCommand fan_init_command;
     uint8_t fan_init_buffer[10];
-    
+
     i2cDriverCommandSetup(fan_update_command, I2C_FAN_ADDRESS << 1 | i2cWriteBit, 20, fan_update_buffer, sizeof(fan_update_buffer));
     i2cDriverCommandSetup(fan_init_command, I2C_FAN_ADDRESS << 1 | i2cWriteBit, 20, fan_init_buffer, sizeof(fan_init_buffer));
 
@@ -26,7 +26,7 @@ void initFans()
     fan_init_buffer[8] = 0x00;//GRPFREQ
     fan_init_buffer[9] = 0xAA;//LEDOUT
     i2cDriverExecuteAndWait(&fan_init_command);
-    
+
     fan_update_buffer[0] = 0x82;//Write from PWM0 with auto-increase
     fan_update_buffer[1] = 0;
     fan_update_buffer[2] = 0;
@@ -61,7 +61,7 @@ void setHotendCoolingFanSpeed(uint8_t fan_speed)
     }else{
         PORTJ &=~_BV(6);
     }
-    
+
     if (fan_update_command.finished && fan_speed != fan_update_buffer[1])
     {
         fan_update_buffer[1] = fan_speed;

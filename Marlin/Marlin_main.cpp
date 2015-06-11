@@ -107,7 +107,7 @@
 // M201 - Set max acceleration in units/s^2 for print moves (M201 X1000 Y1000)
 // M202 - Set max acceleration in units/s^2 for travel moves (M202 X1000 Y1000) Unused in Marlin!!
 // M203 - Set maximum feedrate that your machine can sustain (M203 X200 Y200 Z300 E10000) in mm/sec
-// M204 - Set default acceleration: S normal moves T filament only moves (M204 S3000 T7000) im mm/sec^2.  
+// M204 - Set default acceleration: S normal moves T filament only moves (M204 S3000 T7000) im mm/sec^2.
 //        Also sets minimum segment time in ms (B20000) to prevent buffer underruns and M20 minimum feedrate
 // M205 - Advanced settings:  minimum travel speed S=while printing T=travel only,  B=minimum segment time X= maximum xy jerk, Z=maximum Z jerk, E=maximum E jerk
 // M206 - Set additional homeing offset
@@ -380,7 +380,7 @@ void setup()
 #endif
   ledRGBWInit();
   for (uint8_t i = 0; i < NR_OF_FLOW_SENSORS; i++)
-  { 
+  {
     flowAS5048BInit(i);
     initFlowPosition(i);
   }
@@ -891,7 +891,7 @@ void process_commands()
       {
           planner_bed_leveling_factor[X_AXIS] = 0.0;
           planner_bed_leveling_factor[Y_AXIS] = 0.0;
-          
+
           destination[Z_AXIS] = CONFIG_BED_LEVELING_Z_HEIGHT;
           plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], homing_feedrate[Z_AXIS], active_extruder);
           destination[X_AXIS] = CONFIG_BED_LEVELING_POINT1_X;
@@ -941,11 +941,11 @@ void process_commands()
 
           MSerial.print("height_1: ");
           MSerial.println(height_1, 5);
-          MSerial.print("height_2: ");          
+          MSerial.print("height_2: ");
           MSerial.println(height_2, 5);
-          MSerial.print("height_3: ");          
+          MSerial.print("height_3: ");
           MSerial.println(height_3, 5);
-          
+
           //Set the X and Y skew factors for how skewed the bed is (this assumes the leveling points are 1 in the back, and 2 at the front)
           planner_bed_leveling_factor[X_AXIS] = (height_3 - height_2) / (CONFIG_BED_LEVELING_POINT3_X - CONFIG_BED_LEVELING_POINT2_X);
           planner_bed_leveling_factor[Y_AXIS] = ((height_2 + height_3) / 2.0 - height_1) / (CONFIG_BED_LEVELING_POINT3_Y - CONFIG_BED_LEVELING_POINT1_Y);
@@ -954,7 +954,7 @@ void process_commands()
           MSerial.println(planner_bed_leveling_factor[X_AXIS], 5);
           MSerial.print("bed_leveling_factor Y: ");
           MSerial.println(planner_bed_leveling_factor[Y_AXIS], 5);
-          
+
           //Correct the Z position. So Z0 is always on top of the bed. We are currently positioned at point 3, on top of the bed.
           destination[Z_AXIS] = 0.0;
           plan_set_position(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS]);
@@ -975,11 +975,11 @@ void process_commands()
     case 92: // G92 - Set current position to coordinates given
       if(!code_seen(axis_codes[E_AXIS]))
         st_synchronize();
-      for(int8_t i=0; i < NUM_AXIS; i++) 
+      for(int8_t i=0; i < NUM_AXIS; i++)
       {
-        if(code_seen(axis_codes[i])) 
+        if(code_seen(axis_codes[i]))
         {
-          if(i == E_AXIS) 
+          if(i == E_AXIS)
           {
              current_position[i] = code_value();
              plan_set_e_position(current_position[E_AXIS]);
@@ -998,7 +998,7 @@ void process_commands()
                /* do nothing */
              }
            }
-           else 
+           else
            {
              current_position[i] = code_value();
              plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
@@ -1071,10 +1071,10 @@ void process_commands()
      break;
     case 142:
       {
-	    uint8_t r = 0;
-		uint8_t g = 0;
-		uint8_t b = 0;
-		uint8_t w = 0;
+    uint8_t r = 0;
+    uint8_t g = 0;
+    uint8_t b = 0;
+    uint8_t w = 0;
         if (code_seen('r'))
           r = code_value();
         if (code_seen('g'))
@@ -1083,7 +1083,7 @@ void process_commands()
           b = code_value();
         if (code_seen('w'))
           w = code_value();
-	    ledRGBWUpdate(r, g, b, w);
+        ledRGBWUpdate(r, g, b, w);
       }
       break;
     case 104: // M104 - Set extruder target temp
@@ -1226,7 +1226,7 @@ void process_commands()
         fanSpeed = 0;
         break;
     #endif //FAN_PIN
-    
+
     #if defined(PS_ON_PIN) && PS_ON_PIN > -1
       case 80: // M80  - Turn on Power Supply (ATX Power On)
         SET_OUTPUT(PS_ON_PIN); //GND
@@ -1381,7 +1381,7 @@ void process_commands()
         if(code_seen(axis_codes[i])) max_feedrate[i] = code_value();
       }
       break;
-    case 204: // M204 - Set default acceleration: S normal moves T filament only moves (M204 S3000 T7000) im mm/sec^2.  
+    case 204: // M204 - Set default acceleration: S normal moves T filament only moves (M204 S3000 T7000) im mm/sec^2.
               //        Also sets minimum segment time in ms (B20000) to prevent buffer underruns and M20 minimum feedrate
       {
         if(code_seen('S')) acceleration = code_value() ;
@@ -1398,7 +1398,7 @@ void process_commands()
       if(code_seen('E')) max_e_jerk = code_value() ;
     }
     break;
-    case 206: // M206 - Set additional homeing offset 
+    case 206: // M206 - Set additional homeing offset
       for(int8_t i=0; i < 3; i++)
       {
         if(code_seen(axis_codes[i])) add_homeing[i] = code_value();
@@ -1522,9 +1522,9 @@ void process_commands()
     #ifdef PREVENT_DANGEROUS_EXTRUDE
     case 302: // M302 - Allow cold extrudes, or set the minimum extrude S<temperature>
     {
-	  float temp = .0;
-	  if (code_seen('S')) temp=code_value();
-      set_extrude_min_temp(temp);
+      float temp = .0;
+      if (code_seen('S')) temp=code_value();
+        set_extrude_min_temp(temp);
     }
     break;
     #endif
@@ -1596,7 +1596,7 @@ void process_commands()
                 }
             }
             previous_value = value;
-            
+
             std_dev += (average - value) * (average - value);
         }
         std_dev /= sample_count;
@@ -1646,7 +1646,7 @@ void process_commands()
     {
         int s = 0;
         if (code_seen('S') && (code_value() >= 0) && (code_value() < NR_OF_FLOW_SENSORS))
-        {          
+        {
            s = code_value();
         }
         flowAS5048BStart(s);
@@ -1972,4 +1972,3 @@ bool setTargetedHotend(int code){
   }
   return false;
 }
-

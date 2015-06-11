@@ -10,7 +10,7 @@
 #define MIN_DELTA_ANGLE               (11)
 #define MAX_COUNT_FILAMENT_FLOW_ERROR (2)
 
-struct flow_sensor_data 
+struct flow_sensor_data
 {
     bool          is_first_check_flow_position;
     bool          is_first_flow_position;
@@ -48,14 +48,14 @@ static int16_t readAngleFlowSensor(uint8_t n)
         manage_heater();
         manage_inactivity();
     }
-   
+
     return (int16_t) value;
 }
 
 static int checkFlowSensor(uint8_t n, bool flow_position_change_started)
 {
     int16_t old_angle;
-    
+
     if (flow_position_change_started)
     {
         sd[n].angle                     = readAngleFlowSensor(n);
@@ -89,11 +89,11 @@ static int checkFlowSensor(uint8_t n, bool flow_position_change_started)
 }
 
 void checkFlowPosition(uint8_t n)
-{	
+{
     long old_flow_position;
-    
+
     if (sd[n].is_first_check_flow_position)
-    { 
+    {
         sd[n].previous_millis              = millis();
         sd[n].is_first_check_flow_position = false;
 //        SERIAL_ECHOPGM("sd[");
@@ -128,8 +128,8 @@ void checkFlowPosition(uint8_t n)
 //        MSerial.println(old_flow_position);
         if (abs(sd[n].flow_position - old_flow_position) > MIN_DELTA_FLOW_POSITION)
         {
-            checkFlowSensor(n, !sd[n].changing_flow_position);     
-            sd[n].changing_flow_position = true;       
+            checkFlowSensor(n, !sd[n].changing_flow_position);
+            sd[n].changing_flow_position = true;
         }
         else
         {

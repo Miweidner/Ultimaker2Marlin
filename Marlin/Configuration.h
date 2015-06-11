@@ -364,7 +364,7 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #define SOFT_PWM_SCALE 0
 
 // Bed leveling wizard configuration
-#define LEVELING_OFFSET 0.1				// Assumed thickness of feeler gauge/paper used in leveling (mm)
+#define LEVELING_OFFSET 0.1 // Assumed thickness of feeler gauge/paper used in leveling (mm)
 
 #define ENABLE_BED_LEVELING_PROBE
 #ifdef ENABLE_BED_LEVELING_PROBE

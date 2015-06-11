@@ -26,7 +26,7 @@
 #define AS5048B_ADDRESS_0       (0x40) /* 0b1000000 */
 #define AS5048B_ADDRESS_1       (0x41) /* 0b1000001 */
 
-struct flowAS5048B_sensor_data 
+struct flowAS5048B_sensor_data
 {
     uint8_t sensor_address;
     i2cCommand i2c_flow_write_hi_command;
@@ -48,14 +48,14 @@ void flowAS5048BInit(uint8_t n)
 
     switch(n)
     {
-        case 1:	
+        case 1:
             sd[n].sensor_address = AS5048B_ADDRESS_1;
             break;
-        case 0: 
+        case 0:
         default:
             sd[n].sensor_address = AS5048B_ADDRESS_0;
             break;
-    }	
+    }
 //    SERIAL_ECHOPGM("flowAS5048BInit: sd[");
 //    MSerial.print(n, HEX);
 //    SERIAL_ECHOPGM("].sensor_addres=");

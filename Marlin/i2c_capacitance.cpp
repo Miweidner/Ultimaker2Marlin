@@ -51,14 +51,14 @@ void i2cCapacitanceInit()
 
     i2cDriverCommandSetup(i2cSensorWriteCommand, i2cSensorAddress << 1 | i2cWriteBit, 50, i2cSensorWriteBuffer, sizeof(i2cSensorWriteBuffer));
     i2cDriverCommandSetup(i2cSensorReadCommand, i2cSensorAddress << 1 | i2cReadBit, 50, i2cSensorReadBuffer, sizeof(i2cSensorReadBuffer));
-    
+
     i2cDriverCommandSetup(i2cSensorInitCommand, i2cSensorAddress << 1 | i2cWriteBit, 50, i2cSensorInitBuffer, sizeof(i2cSensorInitBuffer));
-    
+
     i2cSensorInitBuffer[0] = ADDR_FDC_CONF;
     i2cSensorInitBuffer[1] = FDC_CONF_MSB_RATE_400HZ | FDC_CONF_MSB_REPEAT;
     i2cSensorInitBuffer[2] = FDC_CONF_LSB_MEAS_EN(0);
     i2cDriverExecuteAndWait(&i2cSensorInitCommand);
-    
+
     i2cSensorWriteBuffer[0] = ADDR_MEAS_MSB(0);
 }
 
