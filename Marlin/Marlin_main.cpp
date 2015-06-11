@@ -674,10 +674,11 @@ static void homeaxis(int axis) {
 #define HOMEAXIS(LETTER) homeaxis(LETTER##_AXIS)
 
 
-inline void process_error(const char* err)
+inline void process_error(const char* err, float info)
 {
     MSerial.print("ERROR: bed leveling failed ");
-    MSerial.println(err);
+    MSerial.print(err);
+    MSerial.println(info, 5);
 }
 
 
@@ -899,9 +900,9 @@ void process_commands()
           plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], homing_feedrate[X_AXIS], active_extruder);
           st_synchronize();
           float height_1 = probeWithCapacitiveSensor(CONFIG_BED_LEVELING_POINT1_X, CONFIG_BED_LEVELING_POINT1_Y);
-          if (height_1 > 50)
+          if (height_1 > 50 || height_1 == 0)
           {
-              process_error("position 1");
+              process_error("position 1", height_1);
               break;
           }
 
@@ -913,9 +914,9 @@ void process_commands()
           plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], homing_feedrate[X_AXIS], active_extruder);
           st_synchronize();
           float height_2 = probeWithCapacitiveSensor(CONFIG_BED_LEVELING_POINT2_X, CONFIG_BED_LEVELING_POINT2_Y);
-          if (height_2 > 50)
+          if (height_2 > 50 || height_2 == 0)
           {
-              process_error("position 2");
+              process_error("position 2", height_2);
               break;
           }
 
@@ -927,9 +928,9 @@ void process_commands()
           plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], homing_feedrate[X_AXIS], active_extruder);
           st_synchronize();
           float height_3 = probeWithCapacitiveSensor(CONFIG_BED_LEVELING_POINT3_X, CONFIG_BED_LEVELING_POINT3_Y);
-          if (height_3 > 50)
+          if (height_3 > 50 || height_3 == 0)
           {
-              process_error("position 3");
+              process_error("position 3", height_3);
               break;
           }
 

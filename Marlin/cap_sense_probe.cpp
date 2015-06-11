@@ -79,7 +79,7 @@ float probeWithCapacitiveSensorOnce(float x, float y, float z_distance, float fe
     const int diff_average_count = 6;
     float z_target = 0.0;
     float z_position = 0.0;
-    uint8_t foundZeroPosition = 0;
+    uint8_t found_zero_position = 0;
 
     plan_buffer_line(x, y, z_target + z_distance, current_position[E_AXIS], homing_feedrate[Z_AXIS], active_extruder);
     st_synchronize();
@@ -94,7 +94,7 @@ float probeWithCapacitiveSensorOnce(float x, float y, float z_distance, float fe
         diff_history[n] = 0;
 
     uint8_t noise_measure_delay = 5;
-    int steps = 0;
+    int measurement_cycles = 0;
     int levelled_count = 0;
     float levelled_z_sum = 0;
 
@@ -132,12 +132,12 @@ float probeWithCapacitiveSensorOnce(float x, float y, float z_distance, float fe
             }
             else
             {
-                if (foundZeroPosition == 0)
+                if (found_zero_position == 0)
                 {
                     if (diff * diff_average_count * 2 < diff_average)
                     {
                         quickStop();
-                        foundZeroPosition++;
+                        found_zero_position++;
 
                         plan_buffer_line(x, y, current_position[Z_AXIS]+2, current_position[E_AXIS], feedrate, active_extruder);
                     }
@@ -148,25 +148,25 @@ float probeWithCapacitiveSensorOnce(float x, float y, float z_distance, float fe
                     {
                         quickStop();
 
-                        foundZeroPosition++;
+                        found_zero_position++;
                     }
-                    steps++;
+                    measurement_cycles++;
                 }
             }
         }
     }
-    if (steps > 3)
+    if (measurement_cycles > 3)
     {
-        MSerial.print("ERROR:  steps: ");
-        MSerial.println(steps);
+        MSerial.print("ERROR:  measurement_cycles: ");
+        MSerial.println(measurement_cycles);
     }
-    if (foundZeroPosition != 2)
+    if (found_zero_position != 2)
     {
         MSerial.print("ERROR: did not find zero pos ");
-        MSerial.println(int(foundZeroPosition));
+        MSerial.println(int(found_zero_position));
     }
 
-    return (foundZeroPosition == 2 && steps <= 3)?current_position[Z_AXIS]:200;
+    return (found_zero_position == 2 && measurement_cycles <= 3)?current_position[Z_AXIS]:200;
 }
 
 float probeWithCapacitiveSensor(float x, float y)
