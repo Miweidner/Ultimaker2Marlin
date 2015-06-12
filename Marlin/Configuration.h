@@ -368,6 +368,7 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 
 #define ENABLE_BED_LEVELING_PROBE
 #ifdef ENABLE_BED_LEVELING_PROBE
+//# define BED_LEVELING_DEBUG // Sends debug data to the serial port.
 # define CONFIG_BED_LEVELING_Z_HEIGHT 10
 # define CONFIG_BED_LEVELING_POINT1_X 123
 # define CONFIG_BED_LEVELING_POINT1_Y 180
@@ -378,6 +379,7 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 # define CONFIG_FALL_OFF_BED_LEVELING_HEIGHT 10.0
 # define CONFIG_MAX_BED_LEVELING_HEIGHT 20.0
 # define CONFIG_BED_LEVEL_PROBE_REPEAT 3
+# define CONFIG_BED_LEVEL_SENSOR_SAMPLE_COUNT 100
 #endif//ENABLE_BED_LEVELING_PROBE
 
 #include "Configuration_adv.h"

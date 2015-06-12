@@ -5,19 +5,16 @@
 #include "stepper.h"
 #include "temperature.h"
 
-static const int sample_count = 100;
-static uint16_t samples[sample_count];
+static uint16_t samples[CONFIG_BED_LEVEL_SENSOR_SAMPLE_COUNT];
 uint8_t deviation_error = 0;
-
-
-#define MAX_LEVEL_COUNT 3
 
 static uint16_t captureSample()
 {
     uint16_t value;
     static uint16_t previous_value = 0;
     i2cCapacitanceStart();
-    while(true)
+    uint16_t reject_count = 0;
+    while(reject_count < 50)
     {
         if (i2cCapacitanceDone(value))
         {
@@ -27,36 +24,42 @@ static uint16_t captureSample()
 
                 return value;
             }
+            reject_count++;
             i2cCapacitanceStart();
             previous_value = value;
         }
         manage_heater();
         manage_inactivity();
     }
+    // 50 samples have returned with the same value.
+    // the sensor is not connected, return error and stop all motion.
+    // to prevent the bed from colliding with the head.
+    quickStop();
+    return 0;
 }
 
 static uint16_t calculateAverage()
 {
     uint32_t average = 0;
-    for(uint8_t n=0; n<sample_count; n++)
+    for(uint8_t n=0; n<CONFIG_BED_LEVEL_SENSOR_SAMPLE_COUNT; n++)
         average += samples[n];
-    return average / sample_count;
+    return average / CONFIG_BED_LEVEL_SENSOR_SAMPLE_COUNT;
 }
 
 static uint16_t calculatedWeightedAverage()
 {
     uint16_t average = calculateAverage();
     uint32_t standard_deviation = 0;
-    for(uint8_t n=0; n<sample_count; n++)
+    for(uint8_t n=0; n<CONFIG_BED_LEVEL_SENSOR_SAMPLE_COUNT; n++)
     {
         standard_deviation += (samples[n] - average) * (samples[n] - average);
     }
-    standard_deviation /= sample_count;
+    standard_deviation /= CONFIG_BED_LEVEL_SENSOR_SAMPLE_COUNT;
     standard_deviation = sqrt(standard_deviation);
 
     uint32_t weighted_average = 0;
     uint16_t count = 0;
-    for(uint8_t n=0; n<sample_count; n++)
+    for(uint8_t n=0; n<CONFIG_BED_LEVEL_SENSOR_SAMPLE_COUNT; n++)
     {
         if (abs(samples[n] - average) <= standard_deviation)
         {
@@ -101,14 +104,21 @@ float probeWithCapacitiveSensorOnce(float x, float y, float z_distance, float fe
 
     while(blocks_queued())
     {
-        for(uint8_t n=0; n<sample_count; n++)
+        for(uint8_t n=0; n<CONFIG_BED_LEVEL_SENSOR_SAMPLE_COUNT; n++)
         {
             samples[n] = captureSample();
             z_position += float(st_get_position(Z_AXIS))/axis_steps_per_unit[Z_AXIS];
         }
-        z_position /= sample_count;
+        z_position /= CONFIG_BED_LEVEL_SENSOR_SAMPLE_COUNT;
 
         uint16_t average = calculatedWeightedAverage();
+        if (average == 0)
+        {
+            // the sensor is not connected, return error and stop all motion.
+            // to prevent the bed from colliding with the head.
+            quickStop(); // should already have been done.
+            MSerial.println("ERROR: capacitive sensor not connected.");
+        }
 
         if (previous_sensor_average == 0)
         {
@@ -125,6 +135,15 @@ float probeWithCapacitiveSensorOnce(float x, float y, float z_distance, float fe
             if (diff_history_pos >= diff_average_count)
                 diff_history_pos = 0;
 
+#ifdef BED_LEVELING_DEBUG
+            MSerial.print("DEBUG: z_position: ");
+            MSerial.println(z_position);
+            MSerial.print("DEBUG: average: ");
+            MSerial.println(average);
+            MSerial.print("DEBUG: diff: ");
+            MSerial.println(diff);
+#endif /* BED_LEVELING_DEBUG */
+
             previous_sensor_average = average;
             if (noise_measure_delay > 0)
             {
@@ -139,7 +158,7 @@ float probeWithCapacitiveSensorOnce(float x, float y, float z_distance, float fe
                         quickStop();
                         found_zero_position++;
 
-                        plan_buffer_line(x, y, current_position[Z_AXIS]+2, current_position[E_AXIS], feedrate, active_extruder);
+                        plan_buffer_line(x, y, current_position[Z_AXIS] + 2, current_position[E_AXIS], feedrate, active_extruder);
                     }
                 }
                 else
@@ -171,23 +190,23 @@ float probeWithCapacitiveSensorOnce(float x, float y, float z_distance, float fe
 
 float probeWithCapacitiveSensor(float x, float y)
 {
-    int tests = MAX_LEVEL_COUNT;
+    int tests = CONFIG_BED_LEVEL_PROBE_REPEAT;
     float height_sum = 0;
     float height_average = 0;
-    float startHeight = 3;
+    float start_height = 5;
     float feedrate = 0.4;
     float height_count;
     deviation_error = 0;
 
     for(int i = 1; i < tests+1; i++)
     {
-        float tmp = probeWithCapacitiveSensorOnce(x,y,startHeight, feedrate/i);
+        float tmp = probeWithCapacitiveSensorOnce(x,y,start_height, feedrate/i);
         if (tmp > 50)
             return tmp;
         height_sum += tmp*i;
         height_count += i;
         height_average = height_sum/height_count;
-        startHeight = height_average+0.7*((11-i)/10.0);
+        start_height = height_average+0.7*((11-i)/10.0);
     }
     return height_average;
 }
