@@ -58,7 +58,7 @@
 // G11 - Retract recover filament according to settings of M208
 // G28 - Home all Axis
 // G29 - Automagical bed leveling
-// G30 - Single cpacative sensor sensor probe
+// G30 - Probe Z at current position and report result.
 // G90 - Use Absolute Coordinates
 // G91 - Use Relative Coordinates
 // G92 - Set current position to coordinates given
@@ -126,6 +126,8 @@
 // M302 - Allow cold extrudes, or set the minimum extrude S<temperature>
 // M303 - PID relay autotune S<temperature> sets the target temperature. (default target temperature = 150C)
 // M304 - Set bed PID parameters P I and D
+// M310 - Single cap sensor read.
+// M311 - calculate cap sensor noise
 // M400 - Finish all moves
 // M401 - Quickstop - Abort all the planned moves. This will stop the head mid-move, so most likely the head will be out of sync with the stepper position after this
 // M600 - Pause for filament change X[pos] Y[pos] Z[relative lift] E[initial retract] L[later retract distance for removal]
@@ -967,6 +969,16 @@ void process_commands()
       destination[Z_AXIS] = probeWithCapacitiveSensor(destination[X_AXIS], destination[Y_AXIS]);
       plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[Z_AXIS], destination[E_AXIS], homing_feedrate[Z_AXIS], active_extruder);
       MSerial.println(destination[Z_AXIS]);
+      break;
+    case 31: // G31 - test functioning of capacitive sensor
+      if (capacitiveSensorWorks())
+      {
+          MSerial.println("INFO: capacitive sensor works");
+      }
+      else
+      {
+          MSerial.println("ERROR: capacitive sensor basic functionality test FAILED!");
+      }
       break;
 #endif
     case 90: // G90 - Use Absolute Coordinates

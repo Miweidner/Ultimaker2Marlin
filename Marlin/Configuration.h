@@ -380,7 +380,18 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 # define CONFIG_MAX_BED_LEVELING_HEIGHT 20.0
 # define CONFIG_BED_LEVEL_PROBE_REPEAT 3
 # define CONFIG_BED_LEVEL_SENSOR_SAMPLE_COUNT 100
+# define CONFIG_BED_LEVELING_SENSOR_TEST_HEIGHT_1 100
+# define CONFIG_BED_LEVELING_SENSOR_TEST_HEIGHT_2 50
+# define CONFIG_BED_LEVELING_SENSOR_TEST_HEIGHT_3 CONFIG_BED_LEVELING_Z_HEIGHT
 #endif//ENABLE_BED_LEVELING_PROBE
+
+#ifdef BED_LEVELING_DEBUG
+#define DEBUG_PRINT MSerial.print
+#define DEBUG_PRINTLN MSerial.println
+#else
+#define DEBUG_PRINT
+#define DEBUG_PRINTLN
+#endif
 
 #include "Configuration_adv.h"
 #include "thermistortables.h"

@@ -6,5 +6,6 @@
     Does not change the X/Y position. Sets the Z position on the reported Z position.
  */
 float probeWithCapacitiveSensor(float x, float y);
+int capacitiveSensorWorks();
 
 #endif//CAP_SENSE_PROBE_H
