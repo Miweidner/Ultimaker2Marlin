@@ -977,13 +977,9 @@ void process_commands()
       break;
     case 31: // G31 - test functioning of capacitive sensor
       if (capacitiveSensorWorks())
-      {
           MSerial.println("INFO: capacitive sensor works");
-      }
       else
-      {
           MSerial.println("ERROR: capacitive sensor basic functionality test FAILED!");
-      }
       break;
 #endif
     case 90: // G90 - Use Absolute Coordinates

@@ -194,24 +194,19 @@ float probeWithCapacitiveSensorOnce(float x, float y, float z_distance, float fe
     return (found_zero_position == 2 && measurement_cycles <= 3)?current_position[Z_AXIS]:200;
 }
 
-typedef enum
+enum Direction
 {
     Z_DOWN = 0,
     Z_UP = 1
-} Direction;
+};
 
-int singleStepZ(float x, float y, Direction dir, uint16_t steps)
+int singleStepZ(float x, float y, enum Direction dir, uint16_t steps)
 {
     DEBUG_PRINT("z_position: ");
     DEBUG_PRINTLNV(float(st_get_position(Z_AXIS))/axis_steps_per_unit[Z_AXIS], 5);
     plan_buffer_step(0,0, (dir==Z_UP?-1l*long(steps):steps),0,1,active_extruder);
 
-    while(blocks_queued())
-    {
-        // wait
-        manage_heater();
-        manage_inactivity();
-    }
+    st_synchronize();
 
     DEBUG_PRINT("new z_position: ");
     DEBUG_PRINTLNV(float(st_get_position(Z_AXIS))/axis_steps_per_unit[Z_AXIS], 5);
@@ -344,7 +339,7 @@ float singleStepProbeWithCapacitiveSensor(float x, float y)
 
 float probeWithCapacitiveSensor(float x, float y)
 {
-    int tests = 1; //CONFIG_BED_LEVEL_PROBE_REPEAT;
+    int tests = CONFIG_BED_LEVEL_PROBE_REPEAT;
     float height_sum = 0;
     float height_average = 0;
     float start_height = 5;
@@ -362,7 +357,7 @@ float probeWithCapacitiveSensor(float x, float y)
         height_average = height_sum/height_count;
         start_height = height_average+0.7*((11-i)/10.0);
     }
-    //return height_average;    
+    //return height_average;
     return singleStepProbeWithCapacitiveSensor(x,y);
 }
 
