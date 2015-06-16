@@ -21,6 +21,7 @@
 #include "fastio.h"
 #include "Configuration.h"
 #include "pins.h"
+#include "language.h"
 
 #ifndef AT90USB
 #define  HardwareSerial_h // trick to disable the standard HWserial
@@ -231,6 +232,18 @@ extern uint8_t active_extruder;
   # define ARRAY_BY_EXTRUDERS(v1, v2, v3) { v1, v2 }
 #else
   # define ARRAY_BY_EXTRUDERS(v1, v2, v3) { v1 }
+#endif
+
+#if defined(BED_LEVELING_DEBUG) // || defined(....)
+#define DEBUG_PRINT(...) do { SERIAL_PROTOCOLPGM("DEBUG: " __FILE__ ":" STRINGIFY(__LINE__) " " ); MSerial.print( __VA_ARGS__ ); } while(0)
+#define DEBUG_PRINTLN(...) do { SERIAL_PROTOCOLPGM("DEBUG: " __FILE__ ":" STRINGIFY(__LINE__) " " ); MSerial.println( __VA_ARGS__ ); } while(0)
+#define DEBUG_PRINTV(...) MSerial.print( __VA_ARGS__ )
+#define DEBUG_PRINTLNV(...) MSerial.println( __VA_ARGS__ )
+#else
+#define DEBUG_PRINT(...)
+#define DEBUG_PRINTLN(...)
+#define DEBUG_PRINVT(...)
+#define DEBUG_PRINTLNV(...)
 #endif
 
 #endif

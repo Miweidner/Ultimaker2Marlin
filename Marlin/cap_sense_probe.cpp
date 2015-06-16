@@ -143,14 +143,12 @@ float probeWithCapacitiveSensorOnce(float x, float y, float z_distance, float fe
             if (diff_history_pos >= diff_average_count)
                 diff_history_pos = 0;
 
-#ifdef BED_LEVELING_DEBUG
-            MSerial.print("DEBUG: z_position: ");
-            MSerial.println(z_position);
-            MSerial.print("DEBUG: average: ");
-            MSerial.println(average);
-            MSerial.print("DEBUG: diff: ");
-            MSerial.println(diff);
-#endif /* BED_LEVELING_DEBUG */
+            DEBUG_PRINT("z_position: ");
+            DEBUG_PRINTLNV(z_position);
+            DEBUG_PRINT("average: ");
+            DEBUG_PRINTLNV(average);
+            DEBUG_PRINT("diff: ");
+            DEBUG_PRINTLNV(diff);
 
             previous_sensor_average = average;
             if (noise_measure_delay > 0)
@@ -204,10 +202,8 @@ typedef enum
 
 int singleStepZ(float x, float y, Direction dir, uint16_t steps)
 {
-#ifdef BED_LEVELING_DEBUG
-    MSerial.print("DEBUG: z_position: ");
-    MSerial.println(float(st_get_position(Z_AXIS))/axis_steps_per_unit[Z_AXIS], 5);
-#endif /* BED_LEVELING_DEBUG */
+    DEBUG_PRINT("z_position: ");
+    DEBUG_PRINTLNV(float(st_get_position(Z_AXIS))/axis_steps_per_unit[Z_AXIS], 5);
     plan_buffer_step(0,0, (dir==Z_UP?-1l*long(steps):steps),0,1,active_extruder);
 
     while(blocks_queued())
@@ -216,10 +212,9 @@ int singleStepZ(float x, float y, Direction dir, uint16_t steps)
         manage_heater();
         manage_inactivity();
     }
-#ifdef BED_LEVELING_DEBUG
-    MSerial.print("DEBUG: new z_position: ");
-    MSerial.println(float(st_get_position(Z_AXIS))/axis_steps_per_unit[Z_AXIS], 5);
-#endif /* BED_LEVELING_DEBUG */
+
+    DEBUG_PRINT("new z_position: ");
+    DEBUG_PRINTLNV(float(st_get_position(Z_AXIS))/axis_steps_per_unit[Z_AXIS], 5);
 
 }
 
@@ -241,9 +236,9 @@ float singleStepProbeWithCapacitiveSensor(float x, float y)
     int levelled_count = 0;
     float levelled_z_sum = 0;
 
-    DEBUG_PRINTLN("DEBUG1: going to singleStepZ 6 steps down");
+    DEBUG_PRINTLN("going to singleStepZ 6 steps down");
     singleStepZ(x, y, Z_DOWN, 6);
-    DEBUG_PRINTLN("DEBUG1: done singleStepZ 6 steps down");
+    DEBUG_PRINTLN("done singleStepZ 6 steps down");
 
     for(int i = 0; i < 10000; i++)
     {
@@ -252,7 +247,6 @@ float singleStepProbeWithCapacitiveSensor(float x, float y)
             samples[n] = captureSample();
             if (samples[n] == 0)
                 return 0;
-
         }
 
         uint16_t average = calculatedWeightedAverage();
@@ -279,26 +273,24 @@ float singleStepProbeWithCapacitiveSensor(float x, float y)
             if (diff_history_pos >= diff_average_count)
                 diff_history_pos = 0;
 
-#ifdef BED_LEVELING_DEBUG
-            MSerial.print("DEBUG: z_position: ");
-            MSerial.println(float(st_get_position(Z_AXIS))/axis_steps_per_unit[Z_AXIS], 5);
-            MSerial.print("DEBUG: found_zero_position: ");
-            MSerial.println(int(found_zero_position));
-            MSerial.print("DEBUG: average: ");
-            MSerial.println(average);
-            MSerial.print("DEBUG: diff: ");
-            MSerial.println(diff);
-            MSerial.print("DEBUG: diffaverage: ");
-            MSerial.println(float(diff_average)/diff_average_count, 5);
-#endif /* BED_LEVELING_DEBUG */
+            DEBUG_PRINT("z_position: ");
+            DEBUG_PRINTLNV(float(st_get_position(Z_AXIS))/axis_steps_per_unit[Z_AXIS], 5);
+            DEBUG_PRINT("found_zero_position: ");
+            DEBUG_PRINTLNV(int(found_zero_position));
+            DEBUG_PRINT("average: ");
+            DEBUG_PRINTLNV(average);
+            DEBUG_PRINT("diff: ");
+            DEBUG_PRINTLNV(diff);
+            DEBUG_PRINT("diffaverage: ");
+            DEBUG_PRINTLNV(float(diff_average)/diff_average_count, 5);
 
             previous_sensor_average = average;
             if (noise_measure_delay > 0)
             {
                 noise_measure_delay --;
-                DEBUG_PRINTLN("DEBUG2: going to singleStepZ 1 step up");
+                DEBUG_PRINTLN("going to singleStepZ 1 step up");
                 singleStepZ(x, y, Z_UP, 1);
-                DEBUG_PRINTLN("DEBUG2: done singleStepZ 1 step up");
+                DEBUG_PRINTLN("done singleStepZ 1 step up");
             }
             else
             {
@@ -308,9 +300,9 @@ float singleStepProbeWithCapacitiveSensor(float x, float y)
                         found_zero_position++;
                     else
                     {
-                        DEBUG_PRINTLN("DEBUG3: going to singleStepZ 1 step up");
+                        DEBUG_PRINTLN("going to singleStepZ 1 step up");
                         singleStepZ(x, y, Z_UP, 1);
-                        DEBUG_PRINTLN("DEBUG3: done singleStepZ 1 step up");
+                        DEBUG_PRINTLN("done singleStepZ 1 step up");
                     }
                 }
                 else
@@ -327,9 +319,9 @@ float singleStepProbeWithCapacitiveSensor(float x, float y)
                     }
                     else
                     {
-                        DEBUG_PRINTLN("DEBUG4: going to singleStepZ 1 step down");
+                        DEBUG_PRINTLN("going to singleStepZ 1 step down");
                         singleStepZ(x, y, Z_DOWN, 1);
-                        DEBUG_PRINTLN("DEBUG4: done singleStepZ 1 step down");
+                        DEBUG_PRINTLN("done singleStepZ 1 step down");
                     }
 
                     measurement_cycles++;

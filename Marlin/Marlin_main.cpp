@@ -59,6 +59,7 @@
 // G28 - Home all Axis
 // G29 - Automagical bed leveling
 // G30 - Probe Z at current position and report result.
+// G31 - test functioning of capacitive sensor
 // G90 - Use Absolute Coordinates
 // G91 - Use Relative Coordinates
 // G92 - Set current position to coordinates given
