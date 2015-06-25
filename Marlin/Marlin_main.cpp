@@ -42,7 +42,11 @@
 #include "cap_sense_probe.h"
 #include "flow_AS5048B.h"
 
+#ifdef STRING_GIT_VERSION
+#define VERSION_STRING STRING_GIT_VERSION
+#else
 #define VERSION_STRING  "1.0.0"
+#endif
 
 // look here for descriptions of gcodes: http://linuxcnc.org/handbook/gcode/g-code.html
 // http://objects.reprap.org/wiki/Mendel_User_Manual:_RepRapGCodes
@@ -364,10 +368,6 @@ void setup()
       SERIAL_ECHOLNPGM(STRING_CONFIG_H_AUTHOR);
       SERIAL_ECHOPGM("Compiled: ");
       SERIAL_ECHOLNPGM(__DATE__);
-      #ifdef STRING_GIT_VERSION
-        SERIAL_ECHOPGM("Git version: ");
-        SERIAL_ECHOLNPGM(STRING_GIT_VERSION);
-      #endif
     #endif
   #endif
   SERIAL_ECHO_START;
